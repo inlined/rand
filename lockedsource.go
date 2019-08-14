@@ -31,7 +31,7 @@ func (l *lockedSource) Uint64() uint64 {
 	return n
 }
 
-// Lock wrapps an existing rand.Source to make it goroutine safe.
+// LockSource wrapps an existing rand.Source to make it goroutine safe.
 func LockSource(s rand.Source) rand.Source {
 	return &lockedSource{Source: s}
 }

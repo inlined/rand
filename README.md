@@ -37,5 +37,5 @@ rand.NewLocked()
 
 ## Credit
 
-This implementation, while trivial, is inspired directly by the lockedSource
+`lockedsource.go`, while trivial, is inspired directly by the lockedSource
 type in [math/rand/rand.go](https://golang.org/src/math/rand/rand.go).
