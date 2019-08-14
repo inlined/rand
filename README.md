@@ -1,24 +1,38 @@
-# Locked Source
-Locked Source production-code companion to [xkcdrand](github.com/inlined/xkcdrand).
+# Rand
+The built-in `math/rand` library is not very condusive to injection or testability:
 
-The `rand.Rand` type is a struct that is not inherently goroutine safe. The
-top-level functions in `rand.Rand` are, thorough an unexported `rand.Source`
-that locks on all operations.
+1. The way the rand.Rand library computes its values differs widely per type (e.g.
+   an Int vs Int31 grabs different halves of the rand.Source's 64-bit field). This
+   makes test fakes very impractical.
+2. Use of the global rand methods prohibit test injection, but the struct interface
+   isn't goroutine safe.
 
-This library allows you to improve testability with an injectable `rand.Rand`
-and regain goroutine safety. When you don't need goroutine safety,
-you can use `rand.NewSource`. This can speed up CPU-bound loops with random
-number generation by removing locking.
+To fix these, this rand ipmlementation can fully supplant `math/rand`. The library
+performs three primary functions:
+
+1. It introduces an interface version of `rand.Rand` to allow better mocking (see
+   [xkcdrand](github.com/inlined/xkcdrand) for one such fake)
+2. It allows this interface to be created inline without importing both `inlined/rand`
+   and `math/rand` in the same file.
+3. It allows the interface to be created with a goroutine-safe source, preserving
+   the benefits of the package global `math/rand` methods.
+
+The `Rand` interface implementations in this library are trivial wrappers around
+`math/rand` to avoid any loss of entropy. Since the library does not require a
+`rand.Source` in its constructors, callers should remember to always call `Rand.Seed`
+in production code. This is similar to the `math/rand` package methods, which also
+default to a seed of 1.
 
 ## Usage
 
 ```golang
-// Create a goroutine-safe rand.Rand with the default (fixed) seed.
-// Seeds can be changed either with rand.Source.Seed or rand.Rand.Seed
-rand.New(lockedsource.New())
+// Create an interface version of math/rand.Rand using the default (fixed) seed.
+// Seeds can be changed with Rand.Seed.
+rand.New()
 
-// Wrap a goroutine-unsafe Source in a locking implementation:
-rand.New(lockedsource.Wrap(mySource))
+// Create an interface version of math/rand.Rand that is goroutine safe, unlike
+// math/rand.New()
+rand.NewLocked()
 ```
 
 ## Credit
