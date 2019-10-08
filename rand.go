@@ -34,5 +34,19 @@ func New() Rand {
 // NewLocked returns a goroutine safe implementation of the Rand interface.
 func NewLocked() Rand {
 	return rand.New(LockSource(rand.NewSource(1)))
+}
 
+// Dealer is an optional extension to Rand
+type Dealer interface {
+	Deal(n, k int) []int
+}
+
+// Deal selects k elements from n to k. It defaults to an O(n^2) implementation
+// assuming n is small. deferrs to rand.(Dealer) if implemented.
+func Deal(r Rand, n, k int) []int {
+	if d, ok := r.(Dealer); ok {
+		return d.Deal(n, k)
+	}
+	v := r.Perm(n)
+	return v[0 : k+1]
 }
